@@ -1,0 +1,15 @@
+*.so
+*.dylib
+*.dll
+*.h
+/dist/
+/coverage.out
+.DS_Store
+
+# Local AI/Trellis/IDE state; not part of the distributable plugin repo.
+/.trellis/
+/.agents/
+/.claude/
+/.codex/
+/.idea/
+/AGENTS.md

@@ -1,0 +1,64 @@
+# CPA plugin config key: priority-auto-router
+# Both Claude Code and Codex CLI can request model "code"; this plugin routes
+# to provider candidates by priority and uses CPA host.model callbacks for execution.
+
+client_models:
+  - code
+
+clients:
+  claude:
+    source_formats:
+      - claude
+      - anthropic
+    user_agent_contains:
+      - claude
+    candidates:
+      - name: claude_api
+        channel_type: claude_api_key
+        provider: claude
+        model: claude/code
+        priority: 100
+      - name: codex_oauth
+        channel_type: codex_oauth
+        provider: codex
+        model: oauth-codex
+        priority: 90
+
+  codex:
+    source_formats:
+      - codex
+      - openai
+      - responses
+      - openai-response
+      - chat-completions
+    user_agent_contains:
+      - codex
+    candidates:
+      - name: codex_api_key
+        channel_type: codex_api_key
+        provider: codex
+        model: thirdcodex/code
+        priority: 100
+      - name: codex_oauth
+        channel_type: codex_oauth
+        provider: codex
+        model: oauth-codex
+        priority: 90
+
+fallback:
+  enabled: true
+  fallback_on_status:
+    - 401
+    - 403
+    - 408
+    - 409
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+  no_fallback_on_status:
+    - 400
+    - 404
+    - 422
+  stream_fallback_before_first_chunk_only: true
