@@ -60,6 +60,14 @@ func defaultPluginConfig() PluginConfig {
 }
 
 func parsePriorityAutoRouterConfig(raw []byte) (PluginConfig, error) {
+	return parsePriorityAutoRouterConfigWithOptions(raw, false)
+}
+
+func parsePriorityAutoRouterRegistrationConfig(raw []byte) (PluginConfig, error) {
+	return parsePriorityAutoRouterConfigWithOptions(raw, true)
+}
+
+func parsePriorityAutoRouterConfigWithOptions(raw []byte, allowMissingClients bool) (PluginConfig, error) {
 	cfg := defaultPluginConfig()
 	if strings.TrimSpace(string(raw)) != "" {
 		if err := yaml.Unmarshal(raw, &cfg); err != nil {
@@ -67,7 +75,7 @@ func parsePriorityAutoRouterConfig(raw []byte) (PluginConfig, error) {
 		}
 	}
 	normalizeConfig(&cfg)
-	if err := validateConfig(cfg); err != nil {
+	if err := validateConfig(cfg, allowMissingClients); err != nil {
 		return PluginConfig{}, err
 	}
 	return cfg, nil
@@ -101,11 +109,14 @@ func normalizeConfig(cfg *PluginConfig) {
 	cfg.Clients = normalizedClients
 }
 
-func validateConfig(cfg PluginConfig) error {
+func validateConfig(cfg PluginConfig, allowMissingClients bool) error {
 	if len(cfg.ClientModels) == 0 {
 		return fmt.Errorf("%s config requires at least one client_models entry", pluginName)
 	}
 	if len(cfg.Clients) == 0 {
+		if allowMissingClients {
+			return validateFallbackConfig(cfg.Fallback)
+		}
 		return fmt.Errorf("%s config requires at least one clients entry", pluginName)
 	}
 	for name, client := range cfg.Clients {
@@ -139,10 +150,14 @@ func validateConfig(cfg PluginConfig) error {
 			}
 		}
 	}
-	if err := validateStatusCodes("fallback_on_status", cfg.Fallback.FallbackOnStatus); err != nil {
+	return validateFallbackConfig(cfg.Fallback)
+}
+
+func validateFallbackConfig(fallback FallbackConfig) error {
+	if err := validateStatusCodes("fallback_on_status", fallback.FallbackOnStatus); err != nil {
 		return err
 	}
-	if err := validateStatusCodes("no_fallback_on_status", cfg.Fallback.NoFallbackOnStatus); err != nil {
+	if err := validateStatusCodes("no_fallback_on_status", fallback.NoFallbackOnStatus); err != nil {
 		return err
 	}
 	return nil

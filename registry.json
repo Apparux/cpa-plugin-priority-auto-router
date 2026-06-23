@@ -6,7 +6,7 @@
       "name": "Priority Auto Router",
       "description": "Route Claude Code and Codex CLI model alias requests through prioritized CPA provider candidates with automatic fallback.",
       "author": "Amin",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "repository": "https://github.com/Apparux/cpa-plugin-priority-auto-router",
       "homepage": "https://github.com/Apparux/cpa-plugin-priority-auto-router",
       "license": "MIT",
