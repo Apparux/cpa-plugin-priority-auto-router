@@ -23,6 +23,78 @@ func TestRouteModelDetectsCodexByUserAgent(t *testing.T) {
 	}
 }
 
+func TestRouteModelClaudeCodeUserAgentOverridesCodexSourceFormat(t *testing.T) {
+	p := testPlugin(t, baseTestConfig)
+	resp := p.routeModel(pluginapi.ModelRouteRequest{
+		RequestedModel: "code",
+		SourceFormat:   "codex",
+		Headers:        http.Header{"User-Agent": {"claude-code/1.0"}},
+	})
+	if !resp.Handled || resp.TargetKind != pluginapi.ModelRouteTargetSelf || resp.Reason != "plugin_priority_auto_router_claude" {
+		t.Fatalf("route response = %#v", resp)
+	}
+	plan, ok := p.plans.consume(routePlanKeyFromExecutorRequest(pluginapi.ExecutorRequest{
+		Model:        "code",
+		SourceFormat: "codex",
+		Format:       "codex",
+		Headers:      http.Header{"User-Agent": {"claude-code/1.0"}},
+	}))
+	if !ok {
+		t.Fatalf("stored route plan not found")
+	}
+	if plan.ClientType != "claude" || len(plan.Candidates) == 0 || plan.Candidates[0].Provider != "claude" {
+		t.Fatalf("route plan = %#v, want claude client with claude provider first", plan)
+	}
+}
+
+func TestRouteModelClaudeCodeLowercaseUserAgentOverridesResponsesSourceFormat(t *testing.T) {
+	p := testPlugin(t, baseTestConfig)
+	resp := p.routeModel(pluginapi.ModelRouteRequest{
+		RequestedModel: "code",
+		SourceFormat:   "responses",
+		Headers:        http.Header{"user-agent": {"Claude Code CLI/1.0"}},
+	})
+	if !resp.Handled || resp.TargetKind != pluginapi.ModelRouteTargetSelf || resp.Reason != "plugin_priority_auto_router_claude" {
+		t.Fatalf("route response = %#v", resp)
+	}
+	plan, ok := p.plans.consume(routePlanKeyFromExecutorRequest(pluginapi.ExecutorRequest{
+		Model:        "code",
+		SourceFormat: "responses",
+		Format:       "responses",
+		Headers:      http.Header{"user-agent": {"Claude Code CLI/1.0"}},
+	}))
+	if !ok {
+		t.Fatalf("stored route plan not found")
+	}
+	if plan.ClientType != "claude" || len(plan.Candidates) == 0 || plan.Candidates[0].Provider != "claude" {
+		t.Fatalf("route plan = %#v, want claude client with claude provider first", plan)
+	}
+}
+
+func TestRouteModelGenericClaudeUserAgentDoesNotOverrideCodexSourceFormat(t *testing.T) {
+	p := testPlugin(t, baseTestConfig)
+	resp := p.routeModel(pluginapi.ModelRouteRequest{
+		RequestedModel: "code",
+		SourceFormat:   "codex",
+		Headers:        http.Header{"User-Agent": {"claude-compatible-proxy/1.0"}},
+	})
+	if !resp.Handled || resp.TargetKind != pluginapi.ModelRouteTargetSelf || resp.Reason != "plugin_priority_auto_router_codex" {
+		t.Fatalf("route response = %#v", resp)
+	}
+}
+
+func TestRouteModelSourceFormatPrecedenceForNonClaudeCodeUserAgent(t *testing.T) {
+	p := testPlugin(t, baseTestConfig)
+	resp := p.routeModel(pluginapi.ModelRouteRequest{
+		RequestedModel: "code",
+		SourceFormat:   "claude",
+		Headers:        http.Header{"User-Agent": {"Codex CLI/1.0"}},
+	})
+	if !resp.Handled || resp.TargetKind != pluginapi.ModelRouteTargetSelf || resp.Reason != "plugin_priority_auto_router_claude" {
+		t.Fatalf("route response = %#v", resp)
+	}
+}
+
 func TestRouteModelNonCodeUnhandled(t *testing.T) {
 	p := testPlugin(t, baseTestConfig)
 	resp := p.routeModel(pluginapi.ModelRouteRequest{RequestedModel: "not-code", SourceFormat: "claude", Headers: http.Header{}})
