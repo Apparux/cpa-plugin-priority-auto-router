@@ -135,7 +135,23 @@ func routePlanKeyFromExecutorRequest(req pluginapi.ExecutorRequest) routePlanKey
 }
 
 func normalizedUserAgent(headers http.Header) string {
-	return strings.ToLower(strings.TrimSpace(headers.Get("User-Agent")))
+	if headers == nil {
+		return ""
+	}
+	if value := strings.TrimSpace(headers.Get("User-Agent")); value != "" {
+		return strings.ToLower(value)
+	}
+	for key, values := range headers {
+		if !strings.EqualFold(strings.TrimSpace(key), "User-Agent") {
+			continue
+		}
+		for _, value := range values {
+			if value = strings.TrimSpace(value); value != "" {
+				return strings.ToLower(value)
+			}
+		}
+	}
+	return ""
 }
 
 func metadataString(meta map[string]any, key string) string {

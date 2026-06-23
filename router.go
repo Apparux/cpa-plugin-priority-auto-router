@@ -118,14 +118,30 @@ func modelConfigured(models []string, requested string) bool {
 }
 
 func detectClient(req pluginapi.ModelRouteRequest, cfg PluginConfig) string {
-	source := normalizeProtocol(req.SourceFormat)
+	sourceClient := detectClientBySourceFormat(req.SourceFormat, cfg)
+	ua := normalizedUserAgent(req.Headers)
+	uaClient := detectClientByUserAgent(ua, cfg)
+	if isStrongClaudeCodeUserAgent(ua) && uaClient == "claude" {
+		return uaClient
+	}
+	if sourceClient != "" {
+		return sourceClient
+	}
+	return uaClient
+}
+
+func detectClientBySourceFormat(sourceFormat string, cfg PluginConfig) string {
+	source := normalizeProtocol(sourceFormat)
 	for _, name := range sortedClientNames(cfg.Clients) {
 		client := cfg.Clients[name]
 		if containsNormalizedProtocol(client.SourceFormats, source) {
 			return name
 		}
 	}
-	ua := normalizedUserAgent(req.Headers)
+	return ""
+}
+
+func detectClientByUserAgent(ua string, cfg PluginConfig) string {
 	for _, name := range sortedClientNames(cfg.Clients) {
 		client := cfg.Clients[name]
 		if containsAny(ua, client.UserAgentContains) {
@@ -133,6 +149,16 @@ func detectClient(req pluginapi.ModelRouteRequest, cfg PluginConfig) string {
 		}
 	}
 	return ""
+}
+
+func isStrongClaudeCodeUserAgent(ua string) bool {
+	ua = strings.ToLower(strings.TrimSpace(ua))
+	return strings.Contains(ua, "claude-code") ||
+		strings.Contains(ua, "claude_code") ||
+		strings.Contains(ua, "claude code") ||
+		strings.Contains(ua, "claude-cli") ||
+		strings.Contains(ua, "claude_cli") ||
+		strings.Contains(ua, "claude cli")
 }
 
 func sortedClientNames(clients map[string]ClientConfig) []string {

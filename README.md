@@ -7,7 +7,7 @@ The plugin uses CPA `model_router`, `executor`, and `host.model.*` callbacks. It
 ## Features
 
 - Handles only configured client-facing model names; default target is `code`.
-- Detects Claude Code and Codex CLI by source format first, then User-Agent substring.
+- Detects Claude Code and Codex CLI by source format first, with a narrow Claude Code CLI User-Agent override for Codex/OpenAI-compatible source formats.
 - Routes Claude Code through `clients.claude.candidates` and Codex CLI through `clients.codex.candidates`.
 - Sorts candidates by priority descending, then `channel_type: codex_oauth` first on equal priority, then original config order.
 - Filters candidates by CPA `available_providers` when CPA supplies that list.
@@ -196,7 +196,7 @@ The plugin decides which candidate to try based on the detected client and fallb
 ## Troubleshooting
 
 - Request is not handled: confirm the requested model is listed in `client_models` and no bypass header is present.
-- Wrong client profile is selected: check `source_formats` first, then `user_agent_contains`; source format takes precedence.
+- Wrong client profile is selected: check `source_formats` first, then `user_agent_contains`; source format takes precedence except for strong Claude Code CLI User-Agent identifiers (`claude-code`, `Claude Code CLI`, `claude-cli`) on Codex/OpenAI-compatible formats.
 - No candidate is tried: verify the CPA provider is available and matches each candidate's `provider` value.
 - Fallback does not happen: check `fallback.enabled`, `fallback_on_status`, and `no_fallback_on_status`.
 - Stream did not fallback after output began: this is expected; stream fallback is allowed only before the first emitted chunk.
