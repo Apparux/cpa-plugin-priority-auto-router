@@ -28,7 +28,7 @@ type priorityAutoRouterPlugin struct {
 func main() {}
 
 func buildPlugin(configYAML []byte, pluginDir string) (pluginapi.Plugin, error) {
-	cfg, err := parsePriorityAutoRouterConfig(configYAML)
+	cfg, err := parsePriorityAutoRouterRegistrationConfig(configYAML)
 	if err != nil {
 		return pluginapi.Plugin{}, err
 	}
@@ -45,7 +45,7 @@ func buildPlugin(configYAML []byte, pluginDir string) (pluginapi.Plugin, error) 
 			Name:             pluginName,
 			Version:          pluginVersion,
 			Author:           "Amin",
-			GitHubRepository: "https://github.com/router-for-me/cpa-plugin-priority-auto-router",
+			GitHubRepository: "https://github.com/Apparux/cpa-plugin-priority-auto-router",
 			ConfigFields: []pluginapi.ConfigField{
 				{
 					Name:        "client_models",
